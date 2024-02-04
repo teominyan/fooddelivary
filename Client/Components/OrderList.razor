@@ -1,0 +1,82 @@
+﻿@inject HttpClient Http
+@using fooddelivary.Shared.Domain
+@using fooddelivary.Client.Static
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IAccessTokenProvider AccessTokenProvider
+
+<h4 class="mt-4">Active Orders</h4>
+@if (activeOrders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach (var order in activeOrders)
+    {
+        <div class="card mb-4 p-4 " style="width: 18rem;">
+            <p class="card-title">Order ID: @order.Id, Status: @order.Status</p>
+            <div class="card-desctiption">
+
+                <p>Order Items:</p>
+                <ul>
+                    @foreach (var item in order.Products)
+                    {
+                        <li>@item.Name</li>
+                    }
+                </ul>
+            </div>
+            @if (order.Status == "Processing")
+            {
+                <button class="btn btn-primary" @onclick="() => UpdateOrderStatus(order)">Accept Order</button>
+
+            }
+
+
+        </div>
+    }
+}
+
+<h4 class="mt-4">Completed Orders</h4>
+@if (completedOrders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach (var order in completedOrders)
+    {
+        <p>Order ID: @order.Id</p>
+    }
+}
+
+@code {
+    private Order[] Orders;
+    private Order[] activeOrders;
+    private Order[] completedOrders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var tokenResult = await AccessTokenProvider.RequestAccessToken();
+        if (tokenResult.TryGetToken(out var token))
+        {
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+            Orders = await Http.GetFromJsonAsync<Order[]>("api/Orders/all");
+            activeOrders = Orders.Where(order => order.Status != "Completed").ToArray();
+            completedOrders = Orders.Where(order => order.Status == "Completed").ToArray();
+        }
+    }
+    private async Task UpdateOrderStatus(Order order)
+    {
+        order.Status = "Processing";
+        var response = await Http.PutAsJsonAsync($"api/Orders/{order.Id}", order);
+        if (!response.IsSuccessStatusCode)
+        {
+            // Handle error
+        }
+    }
+}

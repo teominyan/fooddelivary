@@ -1,0 +1,81 @@
+﻿@inject HttpClient Http
+@inject IAccessTokenProvider AccessTokenProvider
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using fooddelivary.Client.Components.Shop
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">fooddelivary</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        @{
+            if(UserType == "Shop")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="addnewproduct">
+                        <span class="oi oi-plus" aria-hidden="true"></span> Add a new product
+                    </NavLink>
+                </div>
+            } else if(UserType == "ApplicationUser")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="usercart">
+                        <span class="oi oi-cart" aria-hidden="true"></span> Cart
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="userorders">
+                        <span class="oi oi-list" aria-hidden="true"></span> Orders
+                    </NavLink>
+                </div>
+            }
+        }
+        
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private string UserType { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tokenResult = await AccessTokenProvider.RequestAccessToken();
+
+        if (tokenResult.TryGetToken(out var token))
+        {
+            Console.WriteLine(token.Value);
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+
+            try
+            {
+                UserType = await Http.GetStringAsync($"https://localhost:44387/UserType/");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                UserType = "Error";
+            }
+        }
+    }
+}

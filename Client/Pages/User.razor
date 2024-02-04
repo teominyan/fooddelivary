@@ -1,0 +1,15 @@
+﻿@page "/user"
+<h3>User</h3>
+
+<AuthorizeView>
+<Authorized>
+        <p>You are logged in as a User @context.User.Identity?.Name!.</p>
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not logged in as a User.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+}

@@ -1,0 +1,76 @@
+﻿@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<button class="btn btn-secondary" @onclick="AddProduct">
+    <span class="oi oi-plus"></span>
+    Add A New Product
+    </button>
+<h1>List of Products</h1>
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            if(products.Count == 0)
+            {
+                <tr>
+                    <td colspan="3">No products found</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var product in products)
+                {
+                    <tr>
+                        <td>@product.Name</td>
+                        <td>@product.Price</td>
+                        <td>
+                            <button @onclick="() => EditProduct(product.Id)">
+                            <span class="oi oi-pencil"></span>
+                            </button>
+                            <button @onclick="() => DeleteProduct(product.Id)">
+                                <span class="oi oi-delete"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+        
+    </tbody>
+</table>
+
+@code {
+    private List<Product> products = new List<Product>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>($"{Endpoints.ProductsEndpoint}");
+    }
+
+    private void AddProduct()
+    {
+        // Navigate to the AddProduct page
+        NavigationManager.NavigateTo("/AddNewProduct");
+    }
+
+    private void EditProduct(int productId)
+    {
+        // Navigate to the EditProduct page with the productId as a parameter
+        NavigationManager.NavigateTo($"{Endpoints.ProductsEndpoint}/edit/{productId}");
+    }
+
+    private async Task DeleteProduct(int productId)
+    {
+        // Send a DELETE request to the API
+        await Http.DeleteAsync($"{Endpoints.ProductsEndpoint}/{productId}");
+
+        // Refresh the product list
+        products = await Http.GetFromJsonAsync<List<Product>>($"{Endpoints.ProductsEndpoint}");
+    }
+}

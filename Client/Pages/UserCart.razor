@@ -1,0 +1,73 @@
+﻿@page "/UserCart"
+@inject HttpClient Http
+@using fooddelivary.Shared.Domain
+@using System.Linq
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IAccessTokenProvider AccessTokenProvider
+
+<h3>UserCart</h3>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Price</td>
+                    <td><button class="btn btn-danger" @onclick="(() => RemoveFromCart(product.Id))">Remove</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button class="btn btn-primary" @onclick="Checkout">Checkout</button>
+}
+
+@code {
+    private Product[] products;
+    private Order order = new Order();
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<Product[]>("api/User/cart");
+    }
+
+    private async Task RemoveFromCart(int productId)
+    {
+        await Http.DeleteAsync($"api/User/cart/{productId}");
+        products = await Http.GetFromJsonAsync<Product[]>("api/User/cart");
+    }
+
+    private async Task Checkout()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var tokenResult = await AccessTokenProvider.RequestAccessToken();
+        if (tokenResult.TryGetToken(out var token))
+        {
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+            order.Products = products.ToList<Product>();
+            order.Status = "Pending";
+            var response = await Http.PostAsJsonAsync("api/Orders", order);
+            if (response.IsSuccessStatusCode)
+            {
+                products = null;
+            }
+        }
+    }
+}

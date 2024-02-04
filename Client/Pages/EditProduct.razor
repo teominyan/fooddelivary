@@ -1,0 +1,33 @@
+﻿@page "/api/products/edit/{id:int}"
+@inject HttpClient Http
+<h3>EditProduct</h3>
+
+<EditForm Model="newProduct" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="form-group mb-3">
+        <label for="productName">Product Name</label>
+        <InputText id="productName" @bind-Value="newProduct.Name" class="form-control" placeholder="Enter product name" />
+        <ValidationMessage For="@(() => newProduct.Name)" />
+    </div>
+    <div class="form-group mb-3">
+        <label for="productPrice">Product Price</label>
+        <InputNumber id="productPrice" @bind-Value="newProduct.Price" class="form-control" placeholder="Enter product price" />
+        <ValidationMessage For="@(() => newProduct.Price)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Update Product</button>
+</EditForm>
+
+@code {
+    [Parameter] public int id { get; set; }
+    private Product newProduct = new Product();
+
+    protected override async Task OnInitializedAsync()
+    {
+        newProduct = await Http.GetFromJsonAsync<Product>($"api/products/{id}");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await Http.PutAsJsonAsync($"api/products/{newProduct.Id}", newProduct);
+    }
+}

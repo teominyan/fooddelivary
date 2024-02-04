@@ -1,0 +1,38 @@
+﻿@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using fooddelivary.Shared.Domain
+
+<h1>List of Products to buy</h1>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="d-flex flex-row flex-wrap">
+
+        @foreach (var product in products)
+        {
+            <div class="card p-4 m-4" style="width: 12rem;">
+                <h5 class="card-title">@product.Name</h5>
+                <p class="card-subtitle mb-2 text-muted">Price: @product.Price</p>
+                <button class="btn btn-seconday" @onclick="() => AddToCart(product)">Add to Cart</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private Product[] products;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<Product[]>("api/products/all");
+    }
+
+    private async Task AddToCart(Product product)
+    {
+        await Http.PostAsJsonAsync("api/User/cart", product.Id); // Add the product to the user's cart
+    }
+}

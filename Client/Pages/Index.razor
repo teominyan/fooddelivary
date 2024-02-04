@@ -1,0 +1,50 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject IAccessTokenProvider AccessTokenProvider
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using fooddelivary.Client.Components.Shop
+@using fooddelivary.Client.Components.User
+@using fooddelivary.Client.Components.Rider
+
+<PageTitle>@UserType - Homepage</PageTitle>
+
+
+@{
+    if(UserType == "Shop")
+    {
+       <ShopHome />
+    } else if(UserType == "ApplicationUser")
+    {
+        <UserHome />
+    }    else
+    {
+        <RiderHome />
+    }
+}
+
+
+@code {
+    private string UserType { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tokenResult = await AccessTokenProvider.RequestAccessToken();
+
+        if (tokenResult.TryGetToken(out var token))
+        {
+            Console.WriteLine(token.Value);
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+
+            try
+            {
+                UserType = await Http.GetStringAsync($"https://localhost:44387/UserType/");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                UserType = "Error";
+            }
+        }
+    }
+}

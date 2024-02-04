@@ -1,0 +1,58 @@
+﻿@page "/userorders"
+@inject HttpClient Http
+@using fooddelivary.Shared.Domain
+@using fooddelivary.Client.Static
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@inject IAccessTokenProvider AccessTokenProvider
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+<h3>OrderList</h3>
+
+<h3>Active Orders</h3>
+@if (activeOrders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach (var order in activeOrders)
+    {
+        <p>Order ID: @order.Id, Total: @order.Total, Status: @order.Status</p>
+    }
+}
+
+<h3>Completed Orders</h3>
+@if (completedOrders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach (var order in completedOrders)
+    {
+        <p>Order ID: @order.Id, Total: @order.Total</p>
+    }
+}
+
+@code {
+    private Order[] Orders;
+    private Order[] activeOrders;
+    private Order[] completedOrders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var tokenResult = await AccessTokenProvider.RequestAccessToken();
+        if (tokenResult.TryGetToken(out var token))
+        {
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+            Orders = await Http.GetFromJsonAsync<Order[]>("api/Orders");
+            activeOrders = Orders.Where(order => order.Status != "Completed").ToArray();
+            completedOrders = Orders.Where(order => order.Status == "Completed").ToArray();
+        }
+    }
+}
+}
