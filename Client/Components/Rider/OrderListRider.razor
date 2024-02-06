@@ -75,15 +75,19 @@ else
     }
     private async Task UpdateOrderStatus(Order order)
     {
-        if(order.Status == "On the way!")
+        if (order.Status == "On the way!")
         {
             order.Status = "Completed";
         }
-        order.Status = "On the way!";
+        else if (order.Status == "Processing") // Add this condition if necessary
+        {
+            order.Status = "On the way!";
+        }
+
         var response = await Http.PutAsJsonAsync($"api/Orders/{order.Id}", order);
         if (!response.IsSuccessStatusCode)
         {
             // Handle error
         }
     }
-}
+} 

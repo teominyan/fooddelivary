@@ -28,7 +28,7 @@ else
                     }
                 </ul>
             </div>
-            @if (order.Status == "Processing")
+            @if (order.Status == "Pending")
             {
                 <button class="btn btn-primary" @onclick="() => UpdateOrderStatus(order)">Accept Order</button>
 
