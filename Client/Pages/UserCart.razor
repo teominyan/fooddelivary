@@ -62,6 +62,11 @@ else
         {
             Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
             order.Products = products.ToList<Product>();
+            order.Total = 0;
+            foreach (var product in order.Products)
+            {
+                order.Total += product.Price;
+            }
             order.Status = "Pending";
             var response = await Http.PostAsJsonAsync("api/Orders", order);
             if (response.IsSuccessStatusCode)
